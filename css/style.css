@@ -1,0 +1,361 @@
+    :root {
+      --bg: #0b0d12;
+      --panel: #121621;
+      --panel-2: #151b28;
+      --text: #e6edf6;
+      --muted: #8a93a6;
+      --accent: #7aa2f7;
+      --accent-2: #86efac;
+      --danger: #f43f5e;
+      --border: #2a3245;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    .wrap { max-width: 100%; margin: 10px 20px; padding: 8px; }
+
+        .header { display:flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 6px; flex-wrap: wrap; }
+    .title { font-size: 18px; font-weight: 700; letter-spacing: .2px; }
+    .tips { color: var(--muted); font-size: 12px; }
+
+    .grid { display:grid; grid-template-columns: 1fr 1fr; gap: 6px; position: relative; transition: grid-template-columns 0.3s ease; }
+    
+    .grid.single-view-left { grid-template-columns: 1fr 0fr; }
+    .grid.single-view-right { grid-template-columns: 0fr 1fr; }
+    
+    .grid.single-view-left .video-container:last-child,
+    .grid.single-view-right .video-container:first-child {
+      opacity: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+
+    /* 單視圖時隱藏側的檔名列直接不顯示，
+       避免欄寬收縮過程中文字直向換行、殘留成一條細窄的 column */
+    .grid.single-view-left .video-container:last-child .filename-bar,
+    .grid.single-view-right .video-container:first-child .filename-bar {
+      display: none;
+    }
+
+    .video-container {
+      display: flex;
+      flex-direction: column;
+      position: relative; /* 為 resizer 提供定位上下文 */
+      transition: opacity 0.3s ease;
+      min-width: 0; /* 允許 grid 欄位收合到 0（否則 min-content 會撐出殘留欄） */
+    }
+
+    .slot {
+      background: var(--panel);
+      border: 1px dashed var(--border);
+      border-radius: 14px 14px 0 0; position: relative; overflow: hidden; min-height: 400px;
+      display:flex; align-items:center; justify-content:center;
+      max-height: calc(100vh - 300px); /* 確保控制欄位可見 */
+    }
+    
+    .resizer {
+      position: absolute;
+      top: 0;
+      right: -5px;
+      width: 10px;
+      height: calc(100% + 32px); /* 延伸到檔案名稱區域 */
+      cursor: col-resize;
+      z-index: 10;
+      background: transparent;
+      transition: background-color 0.2s;
+    }
+    
+    .resizer:hover {
+      background-color: var(--accent);
+      opacity: 0.3;
+    }
+    
+    .resizer.dragging {
+      background-color: var(--accent);
+      opacity: 0.6;
+    }
+    .slot.dragover { outline: 2px dashed var(--accent); outline-offset: -6px; }
+    .slot video { 
+      width: 100%; height: 100%; object-fit: contain; background:#000; display:block; 
+      transition: transform 0.1s ease;
+      transform-origin: center center;
+      cursor: grab;
+    }
+    
+    .slot video.dragging {
+      cursor: grabbing;
+      transition: none; /* 拖動時移除過渡效果 */
+    }
+    .slot img {
+      transition: transform 0.1s ease;
+      transform-origin: center center;
+      cursor: grab;
+    }
+    
+    .slot img.dragging {
+      cursor: grabbing;
+      transition: none; /* 拖動時移除過渡效果 */
+    }
+    .slot .placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; pointer-events:none; color:var(--muted); font-size:13px; }
+
+    .video-container .topbar { position:absolute; left:10px; right:10px; top:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; z-index:2; }
+    .chip { background: rgba(255,255,255,0.06); color:var(--text); padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid var(--border); }
+
+    .filename-bar {
+      background: var(--panel-2);
+      border: 1px solid var(--border);
+      border-radius: 0 0 14px 14px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--muted);
+      text-align: center;
+      min-height: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      word-break: break-all;
+      line-height: 1.3;
+    }
+    
+    .filename-bar.has-file {
+      color: var(--text);
+      background: var(--panel);
+    }
+
+    .uploader { display:flex; align-items:center; gap:8px; }
+    .uploader input[type=file] { display:none; }
+    .btn {
+      background: var(--panel-2); color: var(--text); border:1px solid var(--border); padding: 6px 10px; border-radius:10px; cursor:pointer; font-weight:600; font-size:13px;
+      touch-action: manipulation; /* 行動裝置：避免雙擊縮放、300ms 點擊延遲 */
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn:hover { filter: brightness(1.08); }
+    .btn.ghost { background: transparent; }
+    .btn.danger { background: #2a1220; border-color:#4d1c2e; color:#ffd8df; }
+    .btn.primary { background: #16233a; border-color:#29436e; }
+    .btn.green { background:#0f2a19; border-color:#1d4d2c; }
+
+    .controls {
+      margin-top: 8px; background: var(--panel); border:1px solid var(--border); border-radius:14px; padding: 10px; display:grid; gap:10px;
+    }
+    .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .row .grow { flex:1 1 auto; min-width:180px; }
+
+    .range { appearance: none; width:100%; height: 8px; border-radius:999px; background: #1b2233; outline:none; }
+    .range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%; background: var(--accent); cursor:pointer; border:2px solid #0b1020; }
+    .range::-moz-range-thumb { width:16px; height:16px; border:none; border-radius:50%; background: var(--accent); cursor:pointer; }
+
+    label { color: var(--muted); font-size:12px; }
+    select, input[type=number] { background: var(--panel-2); color: var(--text); border:1px solid var(--border); border-radius:10px; padding:6px 8px; font-size:13px; }
+    input[type=range] { accent-color: var(--accent); }
+
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#0f1525; border:1px solid #1c2741; padding:2px 6px; border-radius:6px; font-size:12px; color:#c5d2f6; }
+    .muted { color: var(--muted); }
+
+    /* 控制列分群：同功能的按鈕圈在一起並給小標籤 */
+    .ctrl-group {
+      display: flex; align-items: center; gap: 6px;
+      padding: 4px 8px 4px 10px;
+      border: 1px solid var(--border); border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+    }
+    .ctrl-group .glabel {
+      font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+      color: var(--muted); margin-right: 2px; white-space: nowrap; user-select: none;
+    }
+    #playPauseBtn { min-width: 92px; }
+
+    /* tight row：群組彼此相連、不留空白（共用邊框、只保留換行時的垂直間距）
+       align-items: stretch 讓同一列的群組等高，接縫上下緣才會水平對齊、不會彎折 */
+    .row.tight { column-gap: 0; row-gap: 6px; align-items: stretch; }
+    .row.tight .ctrl-group { border-radius: 0; }
+    .row.tight .ctrl-group:first-child { border-radius: 12px 0 0 12px; }
+    .row.tight .ctrl-group:last-child { border-radius: 0 12px 12px 0; }
+    .row.tight .ctrl-group:only-child { border-radius: 12px; }
+    .row.tight .ctrl-group + .ctrl-group { border-left: none; }
+
+    /* 語言切換時保持元素寬度：另一語言的文字以隱藏的零高度佔位行撐開，
+       寬度＝兩種語言中較寬者，切換時不會忽大忽小 */
+    [data-i18n-reserve]::after {
+      content: attr(data-i18n-reserve);
+      display: block;
+      height: 0;
+      visibility: hidden;
+      overflow: hidden;
+      pointer-events: none;
+      user-select: none;
+      white-space: nowrap;
+    }
+
+    /* Segmented control（檢視模式） */
+    .seg { display: flex; }
+    .seg .btn { border-radius: 0; margin-left: -1px; }
+    .seg .btn:first-child { border-radius: 10px 0 0 10px; margin-left: 0; }
+    .seg .btn:last-child { border-radius: 0 10px 10px 0; }
+
+    /* 快捷鍵說明：header 的收合式提示泡泡 */
+    .shortcuts-help { position: relative; }
+    .shortcuts-help summary {
+      list-style: none; cursor: pointer;
+      background: var(--panel-2); color: var(--text);
+      border: 1px solid var(--border); padding: 6px 10px; border-radius: 10px;
+      font-weight: 600; font-size: 13px; white-space: nowrap; user-select: none;
+    }
+    .shortcuts-help summary::-webkit-details-marker { display: none; }
+    .shortcuts-help summary:hover { filter: brightness(1.08); }
+    .shortcuts-help[open] summary { background: #1d3a5f; border-color: #3a6db0; }
+    .shortcuts-help .tips {
+      position: absolute; right: 0; top: calc(100% + 8px);
+      width: 400px; max-width: 80vw; z-index: 60;
+      background: var(--panel-2); border: 1px solid var(--border);
+      border-radius: 12px; padding: 12px 14px; line-height: 2;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.45);
+    }
+
+    .btn.active { background:#1d3a5f; border-color:#3a6db0; color:#cfe1ff; }
+
+    .seek-wrap { position: relative; }
+    .seek-wrap input[type=range] { position: relative; z-index: 2; }
+    .seek-buffered {
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      height: 8px; border-radius: 999px;
+      background: linear-gradient(90deg, transparent var(--buf-start, 0%), rgba(122,162,247,0.28) var(--buf-start, 0%), rgba(122,162,247,0.28) var(--buf-end, 0%), transparent var(--buf-end, 0%));
+      width: 100%; pointer-events: none; z-index: 1;
+    }
+    .seek-marker {
+      position: absolute; top: 50%; transform: translate(-50%, -50%);
+      width: 3px; height: 18px; background: var(--accent-2);
+      pointer-events: none; z-index: 3; border-radius: 2px;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
+      /* 對齊 range thumb 軌跡：thumb 中心從 8px 走到 (100% - 8px)，--pos 為 0~1 的進度 */
+      left: calc(8px + var(--pos, 0) * (100% - 16px));
+    }
+    .seek-marker-b { background: #fbbf24; }
+
+    /* min-width 固定寬度：避免毫秒/影格數字進位（位數改變）時，前面的 seek bar 一直伸縮 */
+    .time-display { display:flex; align-items:baseline; gap:6px; white-space:nowrap; font-variant-numeric: tabular-nums; min-width: 272px; justify-content: flex-end; }
+    #frameCounter { font-size: 11px; }
+
+    .debug-panel { transition: max-height 0.2s ease; overflow: hidden; }
+    .debug-panel.collapsed { max-height: 32px; }
+    .debug-panel:not(.collapsed) { max-height: 400px; }
+
+    :fullscreen .wrap { margin: 0; padding: 0; max-width: 100%; }
+    :fullscreen .slot { max-height: calc(100vh - 220px); }
+    :-webkit-full-screen .wrap { margin: 0; padding: 0; max-width: 100%; }
+
+    /* Compare view: overlay both videos with a draggable divider */
+    .grid.compare-view {
+      grid-template-columns: 1fr;
+      --compare-pos: 50%;
+    }
+    .grid.compare-view .video-container {
+      grid-row: 1;
+      grid-column: 1;
+    }
+    .grid.compare-view .video-container .filename-bar { display: none; }
+    .grid.compare-view .resizer { display: none; }
+    .grid.compare-view .slot { border-radius: 14px; }
+    .grid.compare-view .video-container:first-child {
+      z-index: 3;
+    }
+    .grid.compare-view .video-container:first-child .slot {
+      clip-path: inset(0 calc(100% - var(--compare-pos)) 0 0);
+    }
+    .grid.compare-view .video-container:last-child {
+      z-index: 2;
+    }
+    /* 比較模式下左右 topbar 會疊在同一區域；改成各自靠邊夾擠，
+       避免其中一側的上傳/清除按鈕被覆蓋或被 .slot 的 clip-path 裁掉 */
+    .grid.compare-view .video-container:first-child .topbar {
+      right: auto;
+      justify-content: flex-start;
+    }
+    .grid.compare-view .video-container:last-child .topbar {
+      left: auto;
+      justify-content: flex-end;
+    }
+
+    .compare-divider {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: var(--compare-pos, 50%);
+      width: 14px;             /* 加大命中區，方便用滑鼠/手指抓 */
+      transform: translateX(-50%);
+      z-index: 10;
+      display: none;
+      pointer-events: auto;
+      cursor: ew-resize;
+      touch-action: none;
+      user-select: none;
+    }
+    .grid.compare-view .compare-divider { display: block; }
+    .compare-divider::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 50%;
+      width: 3px;
+      transform: translateX(-50%);
+      background: #ffffff;
+      box-shadow: 0 0 0 1px rgba(0,0,0,0.45);
+      transition: background-color 0.15s;
+    }
+    .compare-divider:hover::before { background: var(--accent); }
+    .compare-divider.dragging::before { background: var(--accent); width: 4px; }
+    .compare-label {
+      position: absolute;
+      bottom: 12px;
+      padding: 4px 10px;
+      background: rgba(0,0,0,0.6);
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      border-radius: 999px;
+      pointer-events: none;
+      display: none;
+      z-index: 11;
+      max-width: 44%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .grid.compare-view .compare-label { display: block; }
+    .compare-label-left { left: 12px; }
+    .compare-label-right { right: 12px; }
+
+    @media (min-width: 1400px) {
+      .slot {
+        min-height: 500px; /* 大螢幕上更大的影片 */
+      }
+    }
+
+    @media (max-width: 900px){
+      .grid{ grid-template-columns: 1fr; }
+      .header { flex-direction: column; align-items: flex-start; gap: 8px; }
+      .header > div:last-child { flex-direction: row; flex-wrap: wrap; align-items: center; gap: 8px; }
+      .resizer { display: none; } /* 小螢幕隱藏拖拽調整器 */
+      .slot { border-radius: 14px 14px 0 0; min-height: 300px; } /* 小螢幕上稍微縮小高度 */
+      .wrap { margin: 5px 10px; padding: 4px; } /* 小螢幕上更緊湊 */
+      .time-display { min-width: 0; justify-content: flex-start; } /* 窄螢幕不強制保留時間欄寬度 */
+    }
+
+    /* 手機直向：更緊湊的排版與更大的觸控目標 */
+    @media (max-width: 600px){
+      .title { font-size: 15px; }
+      .wrap { margin: 4px 6px; padding: 2px; }
+      .controls { padding: 8px 6px; gap: 8px; }
+      .btn { padding: 9px 12px; font-size: 12px; } /* ≥36px 高的觸控目標 */
+      .ctrl-group { flex-wrap: wrap; padding: 4px 6px; }
+      .row.tight .ctrl-group { flex: 1 1 auto; } /* 群組撐滿寬度，減少參差 */
+      .slot { min-height: 220px; max-height: 45vh; }
+      .shortcuts-help .tips { width: calc(100vw - 40px); }
+      #playPauseBtn { min-width: 84px; }
+      .range { height: 10px; } /* 滑桿加粗較好拖 */
+      .range::-webkit-slider-thumb { width: 20px; height: 20px; }
+      input#volume { width: 90px !important; }
+    }

@@ -1,0 +1,63 @@
+// ===== DOM 元素引用 =====
+const $ = (q) => document.querySelector(q);
+const leftVideo = $('#leftVideo');
+const rightVideo = $('#rightVideo');
+const leftImage = $('#leftImage');
+const rightImage = $('#rightImage');
+const leftFile = $('#leftFile');
+const rightFile = $('#rightFile');
+const dualFile = $('#dualFile');
+const leftSlot = $('#leftSlot');
+const rightSlot = $('#rightSlot');
+const leftPh = $('#leftPh');
+const rightPh = $('#rightPh');
+const leftFilename = $('#leftFilename');
+const rightFilename = $('#rightFilename');
+
+const playPauseBtn = $('#playPauseBtn');
+const stepFwdBtn = $('#stepFwdBtn');
+const stepBackBtn = $('#stepBackBtn');
+const resetBtn = $('#resetBtn');
+const resetSizeBtn = $('#resetSizeBtn');
+const viewDualBtn = $('#viewDualBtn');
+const viewLeftBtn = $('#viewLeftBtn');
+const viewRightBtn = $('#viewRightBtn');
+const zoomInBtn = $('#zoomInBtn');
+const zoomOutBtn = $('#zoomOutBtn');
+const resetZoomBtn = $('#resetZoomBtn');
+const resetPositionBtn = $('#resetPositionBtn');
+
+const seek = $('#seek');
+const cur = $('#cur');
+const dur = $('#dur');
+const speed = $('#speed');
+const volume = $('#volume');
+const fps = $('#fps');
+const offsetInput = $('#offset');
+const applyOffset = $('#applyOffset');
+
+const leftClear = $('#leftClear');
+const rightClear = $('#rightClear');
+const videoGrid = $('#videoGrid');
+const resizer = $('#resizer');
+
+const snapshotBtn = $('#snapshotBtn');
+const swapBtn = $('#swapBtn');
+const fullscreenBtn = $('#fullscreenBtn');
+const colorFixBtn = $('#colorFixBtn');
+const muteBtn = $('#muteBtn');
+const setABtn = $('#setABtn');
+const setBBtn = $('#setBBtn');
+const loopBtn = $('#loopBtn');
+const clearABBtn = $('#clearABBtn');
+const markerA = $('#markerA');
+const markerB = $('#markerB');
+const seekBuffered = $('#seekBuffered');
+const frameCounter = $('#frameCounter');
+const debugInfoEl = $('#debugInfo');
+const debugToggleBtn = $('#debugToggleBtn');
+const viewCompareBtn = $('#viewCompareBtn');
+const compareDivider = $('#compareDivider');
+const compareLabelLeft = $('#compareLabelLeft');
+const compareLabelRight = $('#compareLabelRight');
+const langBtn = $('#langBtn');

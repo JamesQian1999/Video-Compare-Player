@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<!--
+  雙媒體同步播放器 — 影格索引主時鐘版
+  UI/功能與 side_by_side_video_new.html 全等；程式碼拆分為 css/ 與 js/，並新增中/英介面切換（i18n）。
+
+  同步引擎：frame-index master clock（詳見 js/engine.js 檔頭說明）
+  色彩校正：兩種瀏覽器 vs ffmpeg 色偏的校正（詳見 js/color.js 檔頭說明）
+-->
+
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>雙媒體同步播放器｜Side‑by‑Side Media Sync Player</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+  <div class="wrap">
+    <div class="header">
+      <div class="title" data-i18n="app.title">雙媒體同步播放器 <span class="muted">(支援影片和圖片、左右並排、播放與拖動同時同步)</span></div>
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div class="uploader">
+          <label for="dualFile" class="btn primary" data-i18n="upload.dual">📁 同時選擇兩個檔案</label>
+          <input id="dualFile" type="file" accept="video/mp4,video/mov,video/avi,video/mkv,video/webm,video/m4v,video/3gp,video/flv,video/*,image/jpeg,image/png,image/gif,image/webp,image/bmp,image/*,.mp4,.mov,.avi,.mkv,.webm,.m4v,.jpg,.jpeg,.png,.gif,.webp,.bmp" multiple />
+        </div>
+        <details class="shortcuts-help">
+          <summary data-i18n="help.shortcuts">⌨️ 快捷鍵</summary>
+          <div class="tips" data-i18n="app.tips">快捷鍵：<span class="kbd">Space</span> 播放 · <span class="kbd">←/→</span> 逐格 · <span class="kbd">1-4</span> 倍速 · <span class="kbd">+/-/0</span> 縮放 · <span class="kbd">R</span> 重置位置 · <span class="kbd">V</span> 切換檢視 (含比較) · <span class="kbd">M</span> 靜音 · <span class="kbd">F</span> 全螢幕 · <span class="kbd">S</span> 截圖 · <span class="kbd">X</span> 對調 · <span class="kbd">C</span> 色彩校正 · <span class="kbd">A</span>/<span class="kbd">B</span>/<span class="kbd">L</span> 循環片段</div>
+        </details>
+        <button id="langBtn" class="btn ghost" title="切換語言 / Switch language" data-i18n-reserve="🌐 中文">🌐 EN</button>
+      </div>
+    </div>
+
+    <div class="grid" id="videoGrid">
+      <!-- LEFT SLOT -->
+      <div class="video-container">
+        <div class="topbar">
+          <span class="chip" data-i18n="chip.left">Left / 左</span>
+          <div class="uploader">
+            <label for="leftFile" class="btn" data-i18n="upload.left">選擇左檔案</label>
+            <input id="leftFile" type="file" accept="video/mp4,video/mov,video/avi,video/mkv,video/webm,video/m4v,video/3gp,video/flv,video/*,image/jpeg,image/png,image/gif,image/webp,image/bmp,image/*,.mp4,.mov,.avi,.mkv,.webm,.m4v,.jpg,.jpeg,.png,.gif,.webp,.bmp" />
+            <button class="btn ghost" id="leftClear" data-i18n="btn.clear">清除</button>
+          </div>
+        </div>
+        <div id="leftSlot" class="slot" data-side="left">
+          <video id="leftVideo" preload="metadata" playsinline></video>
+          <img id="leftImage" style="width: 100%; height: 100%; object-fit: contain; background:#000; display:none; transform-origin: center center; cursor: grab;" />
+          <div class="placeholder" id="leftPh" data-i18n="ph.left">
+            <div>拖曳影片或圖片到此，或點右上角「選擇左檔案」</div>
+            <div class="muted">支援影片：MP4, MOV, AVI, MKV, WebM<br/>支援圖片：JPG, PNG, GIF, WebP, BMP</div>
+          </div>
+        </div>
+        <div class="filename-bar" id="leftFilename">尚未選擇檔案</div>
+        <div class="resizer" id="resizer"></div>
+      </div>
+
+      <!-- RIGHT SLOT -->
+      <div class="video-container">
+        <div class="topbar">
+          <span class="chip" data-i18n="chip.right">Right / 右</span>
+          <div class="uploader">
+            <label for="rightFile" class="btn" data-i18n="upload.right">選擇右檔案</label>
+            <input id="rightFile" type="file" accept="video/mp4,video/mov,video/avi,video/mkv,video/webm,video/m4v,video/3gp,video/flv,video/*,image/jpeg,image/png,image/gif,image/webp,image/bmp,image/*,.mp4,.mov,.avi,.mkv,.webm,.m4v,.jpg,.jpeg,.png,.gif,.webp,.bmp" />
+            <button class="btn ghost" id="rightClear" data-i18n="btn.clear">清除</button>
+          </div>
+        </div>
+        <div id="rightSlot" class="slot" data-side="right">
+          <video id="rightVideo" preload="metadata" playsinline></video>
+          <img id="rightImage" style="width: 100%; height: 100%; object-fit: contain; background:#000; display:none; transform-origin: center center; cursor: grab;" />
+          <div class="placeholder" id="rightPh" data-i18n="ph.right">
+            <div>拖曳影片或圖片到此，或點右上角「選擇右檔案」</div>
+            <div class="muted">支援拖曳/點選上傳本機檔案<br/>影片和圖片均可同步比較</div>
+          </div>
+        </div>
+        <div class="filename-bar" id="rightFilename">尚未選擇檔案</div>
+      </div>
+
+      <!-- Compare divider (only visible in compare view) -->
+      <div class="compare-divider" id="compareDivider" title="拖動以比較" data-i18n-title="compare.divider.title"></div>
+
+      <!-- Compare-mode 檔名標籤（左下＝左檔、右下＝右檔） -->
+      <div class="compare-label compare-label-left" id="compareLabelLeft">左</div>
+      <div class="compare-label compare-label-right" id="compareLabelRight">右</div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div class="controls">
+      <!-- Row 1：時間軸（最常用，放最上面） -->
+      <div class="row">
+        <div class="grow seek-wrap">
+          <div class="seek-buffered" id="seekBuffered"></div>
+          <div class="seek-marker" id="markerA" style="display:none" title="A 點" data-i18n-title="marker.a.title"></div>
+          <div class="seek-marker seek-marker-b" id="markerB" style="display:none" title="B 點" data-i18n-title="marker.b.title"></div>
+          <input id="seek" class="range" type="range" min="0" max="1" step="0.0001" value="0" />
+        </div>
+        <div class="time-display"><span id="cur"></span> / <span id="dur"></span> <span id="frameCounter" class="muted"></span></div>
+      </div>
+
+      <!-- Row 2：播放 / 速度 / 音量 / A-B 循環 -->
+      <div class="row tight">
+        <div class="ctrl-group">
+          <span class="glabel" data-i18n="group.playback">播放</span>
+          <button id="resetBtn" class="btn ghost" title="回到開頭" data-i18n="btn.reset" data-i18n-title="btn.reset.title">⏮ 回開頭</button>
+          <button id="stepBackBtn" class="btn ghost" title="上一格 (←)" data-i18n="btn.stepBack" data-i18n-title="btn.stepBack.title">◀ -1格</button>
+          <button id="playPauseBtn" class="btn primary" title="播放/暫停 (Space)" data-i18n-title="btn.play.title">▶︎ 播放</button>
+          <button id="stepFwdBtn" class="btn ghost" title="下一格 (→)" data-i18n="btn.stepFwd" data-i18n-title="btn.stepFwd.title">+1格 ▶</button>
+        </div>
+        <div class="ctrl-group">
+          <span class="glabel" data-i18n="group.speed">速度</span>
+          <select id="speed" title="播放倍速 (1-4)" data-i18n-title="label.speed.title">
+            <option value="0.25">0.25×</option>
+            <option value="0.5">0.5×</option>
+            <option value="0.75">0.75×</option>
+            <option value="1" selected>1×</option>
+            <option value="1.25">1.25×</option>
+            <option value="1.5">1.5×</option>
+            <option value="2">2×</option>
+          </select>
+          <label data-i18n="label.fps">逐格 FPS</label>
+          <input id="fps" type="number" min="1" max="240" step="any" value="30" style="width:84px;" />
+        </div>
+        <div class="ctrl-group">
+          <span class="glabel" data-i18n="group.sound">音量</span>
+          <button id="muteBtn" class="btn ghost" title="靜音 (M)" data-i18n-title="btn.mute.title">🔊</button>
+          <input id="volume" type="range" class="range" min="0" max="1" step="0.01" value="1" style="width:110px" />
+        </div>
+        <div class="ctrl-group">
+          <span class="glabel" data-i18n="group.loop">A-B 循環</span>
+          <button id="setABtn" class="btn ghost" title="設定 A 點 (A)" data-i18n-title="btn.setA.title">A</button>
+          <button id="setBBtn" class="btn ghost" title="設定 B 點 (B)" data-i18n-title="btn.setB.title">B</button>
+          <button id="loopBtn" class="btn ghost" title="循環 A-B (L)" data-i18n="btn.loop" data-i18n-title="btn.loop.title">🔁 循環</button>
+          <button id="clearABBtn" class="btn ghost" title="清除 A-B" data-i18n-title="btn.clearAB.title">✕</button>
+        </div>
+      </div>
+
+      <!-- Row 3：檢視 / 縮放 / 工具 -->
+      <div class="row tight">
+        <div class="ctrl-group">
+          <span class="glabel" data-i18n="group.view">檢視</span>
+          <div class="seg">
+            <button id="viewDualBtn" class="btn primary" title="左右並排 (V 循環切換)" data-i18n="btn.viewDual" data-i18n-title="btn.viewDual.title">◫ 雙視圖</button>
+            <button id="viewLeftBtn" class="btn ghost" title="只看左側 (V 循環切換)" data-i18n="btn.viewLeft" data-i18n-title="btn.viewLeft.title">◀ 左側</button>
+            <button id="viewRightBtn" class="btn ghost" title="只看右側 (V 循環切換)" data-i18n="btn.viewRight" data-i18n-title="btn.viewRight.title">右側 ▶</button>
+            <button id="viewCompareBtn" class="btn ghost" title="重疊比較 + 中央滑桿" data-i18n="btn.viewCompare" data-i18n-title="btn.viewCompare.title">◧ 比較</button>
+          </div>
+        </div>
+        <div class="ctrl-group">
+          <span class="glabel" data-i18n="group.zoom">縮放</span>
+          <button id="zoomOutBtn" class="btn ghost" title="縮小 (-)" data-i18n-title="btn.zoomOut.title">➖</button>
+          <button id="resetZoomBtn" class="btn ghost" title="重置縮放 (0)" data-i18n-title="btn.resetZoom.title">1:1</button>
+          <button id="zoomInBtn" class="btn ghost" title="放大 (+)" data-i18n-title="btn.zoomIn.title">➕</button>
+          <button id="resetPositionBtn" class="btn ghost" title="重置位置 (R)" data-i18n="btn.resetPosition" data-i18n-title="btn.resetPosition.title">⌖ 置中</button>
+        </div>
+        <div class="ctrl-group">
+          <span class="glabel" data-i18n="group.tools">工具</span>
+          <button id="snapshotBtn" class="btn ghost" title="截取目前畫面 (S)" data-i18n="btn.snapshot" data-i18n-title="btn.snapshot.title">📸 截圖</button>
+          <button id="swapBtn" class="btn ghost" title="對調左右 (X)" data-i18n="btn.swap" data-i18n-title="btn.swap.title">⇄ 對調</button>
+          <button id="colorFixBtn" class="btn ghost" title="色彩校正：自動偵測（全範圍仿射 / BT.709 gamma）→ 強制全範圍 → 強制709 → 關 (C)" data-i18n-title="btn.colorFix.title">🎨 色彩:自動</button>
+          <button id="fullscreenBtn" class="btn ghost" title="全螢幕 (F)" data-i18n="btn.fullscreen" data-i18n-title="btn.fullscreen.title">⛶ 全螢幕</button>
+          <button id="resetSizeBtn" class="btn ghost" title="重置左右欄寬與高度" data-i18n="btn.resetSize" data-i18n-title="btn.resetSize.title">⤢ 重置版面</button>
+        </div>
+      </div>
+
+      <!-- Row 4：同步偏移 -->
+      <div class="row tight">
+        <div class="ctrl-group">
+          <span class="glabel" data-i18n="group.sync">同步偏移</span>
+          <label data-i18n="label.offset">偏移(ms)</label>
+          <input id="offset" type="number" step="10" value="0" style="width:100px" />
+          <button id="applyOffset" class="btn green" data-i18n="btn.applyOffset">立即對齊</button>
+          <span class="muted" data-i18n="hint.offset">（正值＝右邊延後；負值＝右邊提早）</span>
+        </div>
+      </div>
+
+      <div class="row debug-panel collapsed" style="font-size:11px; color:var(--muted); background:var(--panel-2); padding:8px; border-radius:8px;" id="debugInfo">
+        <div><strong data-i18n="debug.title">除錯資訊</strong></div>
+        <div id="debugText" style="flex:1; min-width:0;"></div>
+        <button class="btn ghost" id="debugToggleBtn" style="margin-left:auto; font-size:11px;" data-i18n-reserve="Collapse">展開</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 循序載入的 classic scripts：共享同一 global lexical environment，
+       語義與原單檔完全相同（拆檔不改邏輯）。順序：先定義、後執行（main.js） -->
+  <script src="js/dom.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/i18n.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/probe.js"></script>
+  <script src="js/color.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/media.js"></script>
+  <script src="js/view.js"></script>
+  <script src="js/snapshot.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
