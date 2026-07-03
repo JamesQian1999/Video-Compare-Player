@@ -260,6 +260,14 @@
     .grid.compare-view .slot { border-radius: 14px; }
     .grid.compare-view .video-container:first-child {
       z-index: 3;
+      /* 左容器整面疊在右容器之上，本身不能攔截點擊，
+         否則右半邊（右側上傳/清除按鈕、影片）都會被透明區域擋住 */
+      pointer-events: none;
+    }
+    /* 可見的子元素重新接收事件：slot 有 clip-path，命中範圍只到分隔線為止 */
+    .grid.compare-view .video-container:first-child .topbar,
+    .grid.compare-view .video-container:first-child .slot {
+      pointer-events: auto;
     }
     .grid.compare-view .video-container:first-child .slot {
       clip-path: inset(0 calc(100% - var(--compare-pos)) 0 0);
