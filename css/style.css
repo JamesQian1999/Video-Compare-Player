@@ -25,7 +25,9 @@
     .grid.single-view-left { grid-template-columns: 1fr 0fr; }
     .grid.single-view-right { grid-template-columns: 0fr 1fr; }
     
-    .grid.single-view-left .video-container:last-child,
+    /* 右側容器後面還有 compare-divider / compare-label，不能用 :last-child，
+       改用 :nth-child(2) 才選得到右側 .video-container */
+    .grid.single-view-left .video-container:nth-child(2),
     .grid.single-view-right .video-container:first-child {
       opacity: 0;
       pointer-events: none;
@@ -34,7 +36,7 @@
 
     /* 單視圖時隱藏側的檔名列直接不顯示，
        避免欄寬收縮過程中文字直向換行、殘留成一條細窄的 column */
-    .grid.single-view-left .video-container:last-child .filename-bar,
+    .grid.single-view-left .video-container:nth-child(2) .filename-bar,
     .grid.single-view-right .video-container:first-child .filename-bar {
       display: none;
     }
@@ -272,7 +274,7 @@
     .grid.compare-view .video-container:first-child .slot {
       clip-path: inset(0 calc(100% - var(--compare-pos)) 0 0);
     }
-    .grid.compare-view .video-container:last-child {
+    .grid.compare-view .video-container:nth-child(2) {
       z-index: 2;
     }
     /* 比較模式下左右 topbar 會疊在同一區域；改成各自靠邊夾擠，
@@ -281,7 +283,7 @@
       right: auto;
       justify-content: flex-start;
     }
-    .grid.compare-view .video-container:last-child .topbar {
+    .grid.compare-view .video-container:nth-child(2) .topbar {
       left: auto;
       justify-content: flex-end;
     }
