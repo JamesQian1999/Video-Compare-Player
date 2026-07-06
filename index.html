@@ -81,6 +81,13 @@
       <!-- Compare-mode 檔名標籤（左下＝左檔、右下＝右檔） -->
       <div class="compare-label compare-label-left" id="compareLabelLeft">左</div>
       <div class="compare-label compare-label-right" id="compareLabelRight">右</div>
+
+      <!-- Highlight diff view（差異高亮，只在 highlight 檢視顯示） -->
+      <div class="highlight-container" id="highlightContainer">
+        <canvas id="highlightCanvas"></canvas>
+        <div class="highlight-ph" id="highlightPh" data-i18n="highlight.empty">載入媒體後顯示差異</div>
+        <div class="highlight-legend" data-i18n="highlight.legend">🔴 左 > 右 · 🔵 左 < 右</div>
+      </div>
     </div>
 
     <!-- CONTROLS -->
@@ -142,7 +149,14 @@
             <button id="viewLeftBtn" class="btn ghost" title="只看左側 (V 循環切換)" data-i18n="btn.viewLeft" data-i18n-title="btn.viewLeft.title">◀ 左側</button>
             <button id="viewRightBtn" class="btn ghost" title="只看右側 (V 循環切換)" data-i18n="btn.viewRight" data-i18n-title="btn.viewRight.title">右側 ▶</button>
             <button id="viewCompareBtn" class="btn ghost" title="重疊比較 + 中央滑桿" data-i18n="btn.viewCompare" data-i18n-title="btn.viewCompare.title">◧ 比較</button>
+            <button id="viewHighlightBtn" class="btn ghost" title="差異高亮：底圖轉灰階，紅=左比右亮、藍=左比右暗" data-i18n="btn.viewHighlight" data-i18n-title="btn.viewHighlight.title">◪ 差異</button>
           </div>
+        </div>
+        <div class="ctrl-group" id="highlightGroup" style="display:none;">
+          <span class="glabel" data-i18n="group.highlight">差異門檻</span>
+          <input id="hlThr" type="range" class="range" min="0" max="100" step="1" value="12" style="width:140px" title="差異門檻：像素差 ≥ 門檻才標色" data-i18n-title="label.hlThr.title" />
+          <span id="hlThrVal" class="muted" style="min-width:24px; text-align:right; font-variant-numeric:tabular-nums;">12</span>
+          <button id="hlThrResetBtn" class="btn ghost" title="重設為預設門檻" data-i18n="btn.hlThrReset" data-i18n-title="btn.hlThrReset.title">↺ 預設</button>
         </div>
         <div class="ctrl-group">
           <span class="glabel" data-i18n="group.zoom">縮放</span>
@@ -192,6 +206,7 @@
   <script src="js/media.js"></script>
   <script src="js/view.js"></script>
   <script src="js/snapshot.js"></script>
+  <script src="js/highlight.js"></script>
   <script src="js/settings.js"></script>
   <script src="js/main.js"></script>
 </body>

@@ -345,8 +345,52 @@
     .compare-label-left { left: 12px; }
     .compare-label-right { right: 12px; }
 
+    /* Highlight view: 差異高亮（灰階底圖 + 紅/藍標示正負差異） */
+    .grid.highlight-view {
+      grid-template-columns: 1fr;
+    }
+    /* 影片元素只是被隱藏，主時鐘仍照常 seek，highlight canvas 從中取畫格 */
+    .grid.highlight-view .video-container { display: none; }
+    .grid.highlight-view .resizer { display: none; }
+    .highlight-container {
+      display: none;
+      position: relative;
+      grid-row: 1;
+      grid-column: 1;
+      background: var(--panel);
+      border: 1px dashed var(--border);
+      border-radius: 14px;
+      min-height: 400px;
+      max-height: calc(100vh - 300px);
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .grid.highlight-view .highlight-container { display: flex; }
+    .highlight-container canvas {
+      width: 100%; height: 100%; object-fit: contain; background: #000;
+      transition: transform 0.1s ease;
+      transform-origin: center center;
+      cursor: grab;
+    }
+    .highlight-container canvas.dragging { cursor: grabbing; transition: none; }
+    .highlight-ph {
+      position: absolute; inset: 0;
+      display: flex; align-items: center; justify-content: center;
+      color: var(--muted); font-size: 13px;
+      pointer-events: none;
+    }
+    .highlight-legend {
+      position: absolute; left: 12px; bottom: 12px;
+      padding: 4px 10px;
+      background: rgba(0,0,0,0.6); color: #fff;
+      font-size: 12px; font-weight: 600; border-radius: 999px;
+      pointer-events: none;
+      z-index: 11;
+    }
+
     @media (min-width: 1400px) {
-      .slot {
+      .slot, .highlight-container {
         min-height: 500px; /* 大螢幕上更大的影片 */
       }
     }
@@ -369,7 +413,7 @@
       .btn { padding: 9px 12px; font-size: 12px; } /* ≥36px 高的觸控目標 */
       .ctrl-group { flex-wrap: wrap; padding: 4px 6px; }
       .row.tight .ctrl-group { flex: 1 1 auto; } /* 群組撐滿寬度，減少參差 */
-      .slot { min-height: 220px; max-height: 45vh; }
+      .slot, .highlight-container { min-height: 220px; max-height: 45vh; }
       .shortcuts-help .tips { width: calc(100vw - 40px); }
       #playPauseBtn { min-width: 84px; }
       .range { height: 10px; } /* 滑桿加粗較好拖 */

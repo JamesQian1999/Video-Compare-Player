@@ -185,6 +185,7 @@ viewDualBtn.addEventListener('click', () => setViewMode('dual'));
 viewLeftBtn.addEventListener('click', () => setViewMode('left'));
 viewRightBtn.addEventListener('click', () => setViewMode('right'));
 viewCompareBtn.addEventListener('click', () => setViewMode('compare'));
+viewHighlightBtn.addEventListener('click', () => setViewMode('highlight'));
 
 // 縮放按鈕事件
 zoomInBtn.addEventListener('click', zoomIn);

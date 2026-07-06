@@ -50,6 +50,7 @@ function updateVideoTransform() {
   rightVideo.style.transform = transform;
   leftImage.style.transform = transform;
   rightImage.style.transform = transform;
+  highlightCanvas.style.transform = transform;
 }
 
 function resetPosition() {
@@ -76,12 +77,14 @@ function resetZoom() {
 // 設置視圖模式
 function setViewMode(mode) {
   const prev = viewMode;
-  const enteringCompare = mode === 'compare' && prev !== 'compare';
-  const leavingCompare = prev === 'compare' && mode !== 'compare';
+  // compare / highlight 都是「單欄覆蓋」模式，共用欄寬保存/還原與縮放重置邏輯
+  const isOverlay = (m) => m === 'compare' || m === 'highlight';
+  const enteringCompare = isOverlay(mode) && !isOverlay(prev);
+  const leavingCompare = isOverlay(prev) && !isOverlay(mode);
 
   viewMode = mode;
 
-  // 進出比較模式時：保存/還原 resizer 設定的欄寬，並重置縮放與位移避免畫面亂跳；
+  // 進出覆蓋模式時：保存/還原 resizer 設定的欄寬，並重置縮放與位移避免畫面亂跳；
   // 另外暫時關閉欄寬過渡，避免兩支影片擠在縮短中的單欄裡那種「亂跳」動畫
   if (enteringCompare || leavingCompare) {
     const prevTransition = videoGrid.style.transition;
@@ -107,10 +110,10 @@ function setViewMode(mode) {
   }
 
   // 移除所有視圖類別
-  videoGrid.classList.remove('single-view-left', 'single-view-right', 'compare-view');
+  videoGrid.classList.remove('single-view-left', 'single-view-right', 'compare-view', 'highlight-view');
 
   // 重置所有按鈕樣式
-  [viewDualBtn, viewLeftBtn, viewRightBtn, viewCompareBtn].forEach(b => {
+  [viewDualBtn, viewLeftBtn, viewRightBtn, viewCompareBtn, viewHighlightBtn].forEach(b => {
     b.classList.remove('primary');
     b.classList.add('ghost');
   });
@@ -128,19 +131,27 @@ function setViewMode(mode) {
     videoGrid.classList.add('compare-view');
     viewCompareBtn.classList.remove('ghost');
     viewCompareBtn.classList.add('primary');
+  } else if (mode === 'highlight') {
+    videoGrid.classList.add('highlight-view');
+    viewHighlightBtn.classList.remove('ghost');
+    viewHighlightBtn.classList.add('primary');
   } else {
     viewMode = 'dual';
     viewDualBtn.classList.remove('ghost');
     viewDualBtn.classList.add('primary');
   }
 
+  // 差異門檻滑桿只在 highlight 模式顯示；進入時立刻重算一次
+  highlightGroup.style.display = viewMode === 'highlight' ? '' : 'none';
+  if (viewMode === 'highlight' && typeof requestHighlightRender === 'function') requestHighlightRender();
+
   saveSettings();
 }
 
 // 切換視圖模式（用於鍵盤快捷鍵）
 function toggleViewMode() {
-  // 循環切換：dual -> left -> right -> compare -> dual
-  const order = ['dual', 'left', 'right', 'compare'];
+  // 循環切換：dual -> left -> right -> compare -> highlight -> dual
+  const order = ['dual', 'left', 'right', 'compare', 'highlight'];
   const idx = order.indexOf(viewMode);
   setViewMode(order[(idx + 1) % order.length]);
 }
@@ -367,10 +378,10 @@ function initResizer() {
 // 添加滾輪縮放功能
 function initZoomFeature() {
   let zoomEndTimer = null;
-  const allMedia = [leftVideo, rightVideo, leftImage, rightImage];
+  const allMedia = [leftVideo, rightVideo, leftImage, rightImage, highlightCanvas];
 
-  // 為兩個影片槽添加滾輪事件
-  [leftSlot, rightSlot].forEach(slot => {
+  // 為兩個影片槽（與差異畫布容器）添加滾輪事件
+  [leftSlot, rightSlot, highlightContainer].forEach(slot => {
     slot.addEventListener('wheel', (e) => {
       e.preventDefault();
 
@@ -407,7 +418,7 @@ function initZoomFeature() {
 // 添加拖移功能
 function initDragFeature() {
   // 為兩個影片和圖片添加拖移事件
-  [leftVideo, rightVideo, leftImage, rightImage].forEach(element => {
+  [leftVideo, rightVideo, leftImage, rightImage, highlightCanvas].forEach(element => {
     element.addEventListener('mousedown', (e) => {
       // 只有在放大狀態下才允許拖移
       if (videoScale <= 1) return;
@@ -419,7 +430,7 @@ function initDragFeature() {
       dragStartY = e.clientY;
 
       // 同時加給左右兩邊，避免另一邊 0.1s transition 造成「延遲」
-      [leftVideo, rightVideo, leftImage, rightImage].forEach(el => el.classList.add('dragging'));
+      [leftVideo, rightVideo, leftImage, rightImage, highlightCanvas].forEach(el => el.classList.add('dragging'));
       document.body.style.userSelect = 'none';
     });
   });
@@ -461,18 +472,19 @@ function initDragFeature() {
       rightVideo.classList.remove('dragging');
       leftImage.classList.remove('dragging');
       rightImage.classList.remove('dragging');
+      highlightCanvas.classList.remove('dragging');
     }
   });
 
   // 行動裝置：放大後單指觸控拖移（與滑鼠拖移相同邏輯）
-  [leftVideo, rightVideo, leftImage, rightImage].forEach(element => {
+  [leftVideo, rightVideo, leftImage, rightImage, highlightCanvas].forEach(element => {
     element.addEventListener('touchstart', (e) => {
       if (videoScale <= 1 || e.touches.length !== 1) return;
       isDragging = true;
       dragMoved = false;
       dragStartX = e.touches[0].clientX;
       dragStartY = e.touches[0].clientY;
-      [leftVideo, rightVideo, leftImage, rightImage].forEach(el => el.classList.add('dragging'));
+      [leftVideo, rightVideo, leftImage, rightImage, highlightCanvas].forEach(el => el.classList.add('dragging'));
     }, { passive: true });
   });
 
@@ -509,6 +521,7 @@ function initDragFeature() {
       rightVideo.classList.remove('dragging');
       leftImage.classList.remove('dragging');
       rightImage.classList.remove('dragging');
+      highlightCanvas.classList.remove('dragging');
     }
   });
 }

@@ -9,6 +9,7 @@ function saveSettings() {
       lastVolume: lastVolume,
       fps: Number(fps.value),
       viewMode,
+      highlightThr: hlThreshold,
       muted: isMuted,
       colorCorrectMode,
       lang: currentLang,
@@ -27,6 +28,7 @@ function loadSettings() {
     if (s.volume !== undefined) volume.value = s.volume;
     if (s.lastVolume !== undefined && s.lastVolume > 0) lastVolume = s.lastVolume;
     if (s.fps) fps.value = s.fps;
+    if (s.highlightThr !== undefined) setHlThreshold(s.highlightThr);
     if (s.viewMode) setViewMode(s.viewMode);
     if (s.muted) setMuted(true);
     if (s.colorCorrectMode) colorCorrectMode = s.colorCorrectMode === 'on' ? 'fullrange' : s.colorCorrectMode; // 舊設定 'on' ≡ 強制全範圍
