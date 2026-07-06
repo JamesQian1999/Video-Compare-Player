@@ -11,7 +11,7 @@ const maxScale = 10; // 最大縮放比例
 // A-B 循環
 let aPoint = null;
 let bPoint = null;
-let loopEnabled = false;
+let loopEnabled = true; // 預設開啟：未設 A-B 點時循環整段（全範圍）
 
 // 儲存使用者透過 resizer 自訂的欄寬，於進出比較模式時保留
 let savedGridColumns = null;

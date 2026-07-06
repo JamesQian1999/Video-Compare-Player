@@ -1,13 +1,13 @@
 // ===== 初始化與事件掛載（保持與原版相同的執行順序）=====
 
-// --- 語言初始化：優先用已儲存設定，否則依瀏覽器語言 ---
+// --- 語言初始化：優先用已儲存設定，否則預設英文 ---
 (function initLanguage() {
   let lang = null;
   try {
     const raw = localStorage.getItem(SETTINGS_KEY);
     if (raw) lang = JSON.parse(raw).lang || null;
   } catch {}
-  currentLang = lang === 'en' || lang === 'zh' ? lang : detectDefaultLang();
+  currentLang = lang === 'en' || lang === 'zh' ? lang : 'en';
   applyStaticTexts();
 })();
 
@@ -461,6 +461,9 @@ loadSettings();
 
 // 同步所有動態文字（含語言切換按鈕本身的文字）
 refreshDynamicTexts();
+
+// 反映預設循環狀態（全範圍 loop 預設開啟）
+loopBtn.classList.toggle('active', loopEnabled);
 
 // 全域錯誤處理
 window.addEventListener('error', (e) => {
