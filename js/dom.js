@@ -55,7 +55,6 @@ const markerB = $('#markerB');
 const seekBuffered = $('#seekBuffered');
 const frameCounter = $('#frameCounter');
 const debugInfoEl = $('#debugInfo');
-const debugToggleBtn = $('#debugToggleBtn');
 const viewCompareBtn = $('#viewCompareBtn');
 const viewHighlightBtn = $('#viewHighlightBtn');
 const highlightGroup = $('#highlightGroup');

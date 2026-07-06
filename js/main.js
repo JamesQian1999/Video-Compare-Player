@@ -30,8 +30,7 @@ function refreshDynamicTexts() {
   updateCompareLabels();
   if (!leftFilename.classList.contains('has-file')) leftFilename.textContent = t('file.none');
   if (!rightFilename.classList.contains('has-file')) rightFilename.textContent = t('file.none');
-  debugToggleBtn.textContent = debugInfoEl.classList.contains('collapsed') ? t('debug.expand') : t('debug.collapse');
-  if (!debugInfoEl.classList.contains('collapsed')) updateDebugInfo();
+  updateDebugInfo();
   updateTimeUI();
   langBtn.textContent = t('btn.lang');
   updateThemeButton();
@@ -236,12 +235,6 @@ clearABBtn.addEventListener('click', clearAB);
   });
 });
 
-// 除錯面板切換
-debugToggleBtn.addEventListener('click', () => {
-  const collapsed = debugInfoEl.classList.toggle('collapsed');
-  debugToggleBtn.textContent = collapsed ? t('debug.expand') : t('debug.collapse');
-  if (!collapsed) updateDebugInfo();
-});
 
 // Seeking — 用 pointerdown/up 控制拖曳狀態，避免 input/change 順序不確定
 seek.addEventListener('pointerdown', ()=>{ seekDragging = true; });
@@ -399,26 +392,30 @@ window.addEventListener('resize', () => {
   }, 300);
 });
 
-// 組出某一側的媒體詳細資訊列（檔名/大小/容器/時長/解析度/編碼/FPS/聲音）
-function debugMediaLine(side) {
+// 蒐集某一側的媒體詳細資訊（回傳 key→值 物件；供表格逐列顯示）
+// 注意：資料來源為 left*/right* 狀態，swapSides() 已將這些狀態互換，故表格左右欄會自動跟著對調
+function debugMediaData(side) {
   const info = side === 'left' ? leftMediaInfo : rightMediaInfo;
   const v = side === 'left' ? leftVideo : rightVideo;
   const img = side === 'left' ? leftImage : rightImage;
-  const sideName = t(side === 'left' ? 'side.left' : 'side.right');
-  if (!info) return `${sideName}: ${t('debug.notLoaded')}`;
+  const readyState = v.readyState;
+  const cur = Number.isFinite(v.duration) ? v.currentTime.toFixed(4) : '—';
 
-  if (info.kind === 'image') {
-    const res = img.naturalWidth ? `${img.naturalWidth}×${img.naturalHeight}` : '—';
-    return t('debug.imageLine', {
-      side: sideName, name: info.name, size: info.sizeMB, res,
-      type: info.mime || t('debug.unknown'),
-    });
+  if (!info) {
+    return { loaded: false, currentTime: cur, readyState };
   }
 
-  const dur = Number.isFinite(v.duration) ? formatTime(v.duration) : '—';
-  const res = v.videoWidth ? `${v.videoWidth}×${v.videoHeight}` : '—';
+  if (info.kind === 'image') {
+    return {
+      loaded: true, kind: 'image',
+      name: info.name, size: info.sizeMB,
+      res: img.naturalWidth ? `${img.naturalWidth}×${img.naturalHeight}` : '—',
+      type: info.mime || t('debug.unknown'),
+      currentTime: cur, readyState,
+    };
+  }
+
   const m = info.mp4;
-  const codec = (m && m.video && m.video.codec) ? m.video.codec : t('debug.unknown');
   const sideFps = side === 'left' ? leftFps : rightFps;
   let audio;
   if (m) {
@@ -431,41 +428,69 @@ function debugMediaLine(side) {
       || (v.webkitAudioDecodedByteCount > 0) || v.mozHasAudio === true;
     audio = hasAudio ? t('debug.audio.yes') : t('debug.audio.unknown');
   }
-  return t('debug.mediaLine', {
-    side: sideName, name: info.name, size: info.sizeMB,
-    container: info.container || '—', duration: dur, res, codec,
-    fps: sideFps != null ? sideFps : t('debug.unknown'), audio,
-  });
+  return {
+    loaded: true, kind: 'video',
+    name: info.name, size: info.sizeMB,
+    container: info.container || '—',
+    duration: Number.isFinite(v.duration) ? formatTime(v.duration) : '—',
+    res: v.videoWidth ? `${v.videoWidth}×${v.videoHeight}` : '—',
+    codec: (m && m.video && m.video.codec) ? m.video.codec : t('debug.unknown'),
+    fps: sideFps != null ? sideFps : t('debug.unknown'),
+    audio,
+    currentTime: cur, readyState,
+  };
 }
 
 function updateDebugInfo() {
   const debugText = document.getElementById('debugText');
+  const esc = (s) => String(s).replace(/[&<>]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+  const L = debugMediaData('left');
+  const R = debugMediaData('right');
 
-  debugText.innerHTML = t('debug.body', {
-    leftLine: debugMediaLine('left'),
-    rightLine: debugMediaLine('right'),
-    offset: syncOffset.toFixed(3),
-    baseDur: formatTime(baseDuration),
-    detectedFPS,
-    fpsSetting: fps.value,
-    playState: isPlaying ? t('debug.playing') : t('debug.paused'),
-    master: masterTime.toFixed(4),
-    frame: frameOf(masterTime),
-    totalFrames: totalFramesCount(),
-    leftCur: Number.isFinite(leftVideo.duration) ? leftVideo.currentTime.toFixed(4) : '—',
-    rightCur: Number.isFinite(rightVideo.duration) ? rightVideo.currentTime.toFixed(4) : '—',
-    formats: getSupportedFormats(),
-    leftReady: leftVideo.readyState,
-    rightReady: rightVideo.readyState,
-  });
+  // 每列：[標籤 i18n key, left 值, right 值]。缺值以「—」表示
+  const dash = '—';
+  const val = (o, k) => (o.loaded && o[k] != null) ? esc(o[k]) : dash;
+  const rows = [
+    ['debug.row.name', val(L, 'name'), val(R, 'name')],
+    ['debug.row.size', L.loaded ? `${val(L, 'size')} MB` : dash, R.loaded ? `${val(R, 'size')} MB` : dash],
+    ['debug.row.container', val(L, 'container'), val(R, 'container')],
+    ['debug.row.duration', val(L, 'duration'), val(R, 'duration')],
+    ['debug.row.res', val(L, 'res'), val(R, 'res')],
+    ['debug.row.codec', val(L, 'codec'), val(R, 'codec')],
+    ['debug.row.type', val(L, 'type'), val(R, 'type')],
+    ['debug.row.fps', val(L, 'fps'), val(R, 'fps')],
+    ['debug.row.audio', val(L, 'audio'), val(R, 'audio')],
+    ['debug.row.currentTime', `${val(L, 'currentTime')} s`, `${val(R, 'currentTime')} s`],
+    ['debug.row.readyState', `${L.readyState}/4`, `${R.readyState}/4`],
+  ];
+
+  // 兩側都未載入該欄位時整列略過（例如兩邊都是圖片時，不顯示容器/編碼/FPS/聲音/時長）
+  const bothDash = (a, b) => a === dash && b === dash;
+  const perSideRows = rows.filter(([, l, r]) => !bothDash(l, r)).map(
+    ([key, l, r]) => `<tr><th class="info-attr">${esc(t(key))}</th><td class="info-val">${l}</td><td class="info-val">${r}</td></tr>`
+  ).join('');
+
+  // 共用資訊（非左右分欄）：以整列 colspan 顯示於表格下方
+  const shared = [
+    [t('debug.row.offset'), `${syncOffset.toFixed(3)} s`],
+    [t('debug.row.baseDur'), formatTime(baseDuration)],
+    [t('debug.row.detectedFPS'), `${detectedFPS} (${t('debug.row.fpsSetting')}: ${esc(fps.value)})`],
+    [t('debug.row.master'), `${isPlaying ? t('debug.playing') : t('debug.paused')} · master=${masterTime.toFixed(4)}s · ${t('debug.row.frame')} ${frameOf(masterTime)}/${totalFramesCount()}`],
+    [t('debug.row.formats'), esc(getSupportedFormats())],
+  ].map(([label, v]) => `<tr><th class="info-attr">${esc(label)}</th><td class="info-val" colspan="2">${v}</td></tr>`).join('');
+
+  debugText.innerHTML =
+    `<table class="info-table">
+      <thead><tr><th></th><th>${esc(t('side.left'))}</th><th>${esc(t('side.right'))}</th></tr></thead>
+      <tbody>
+        ${perSideRows}
+        <tr class="info-section"><td colspan="3">${esc(t('debug.section.shared'))}</td></tr>
+        ${shared}
+      </tbody>
+    </table>`;
 }
 
-// 只在除錯面板展開時才更新
-setInterval(() => {
-  if (!debugInfoEl.classList.contains('collapsed')) {
-    updateDebugInfo();
-  }
-}, 1000);
+setInterval(updateDebugInfo, 1000);
 
 // 初始化比較模式檔名標籤
 updateCompareLabels();
