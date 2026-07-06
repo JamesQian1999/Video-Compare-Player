@@ -2,7 +2,8 @@
 // 兩側媒體逐像素相減：底圖為左側灰階，像素差 ≥ 門檻的位置依「正負」染色
 //   紅 = 左比右亮（正）、藍 = 左比右暗（負）；差異越大顏色越飽和。
 // 差異幅度取 RGB 三通道差的最大值（純色差也抓得到），正負號取亮度差。
-// 門檻由 UI 滑桿即時調整（0–100，對應 0–255 的像素差）。
+// 門檻由 UI 滑桿即時調整：顯示 0–100，實際像素差門檻＝顯示值 × HL_THR_SCALE（0–50），
+// 讓滑桿在低門檻區有兩倍的調整解析度。
 //
 // 效能與時機：
 // - 處理解析度上限 HL_MAX_PIXELS（超過等比例縮小），避免 4K 每格全解析度掃描。
@@ -13,8 +14,9 @@
 // - 注意：色彩校正是 CSS filter，drawImage 拿到的是原始像素；兩側一致，不影響相減。
 
 const HL_MAX_PIXELS = 1000000;
-const HL_DEFAULT_THRESHOLD = Number(hlThrInput.value) || 12; // 預設門檻＝HTML 上的初始值
-let hlThreshold = HL_DEFAULT_THRESHOLD;
+const HL_THR_SCALE = 0.5; // 顯示值(0–100) → 實際像素差門檻(0–50)
+const HL_DEFAULT_THRESHOLD = Number(hlThrInput.value) || 12; // 預設門檻（顯示值）＝HTML 上的初始值
+let hlThreshold = HL_DEFAULT_THRESHOLD; // 顯示值；實際門檻見 renderHighlight 的 thr
 let hlForce = false;
 let hlLastSig = '';
 
@@ -65,7 +67,7 @@ function renderHighlight() {
   const A = base.data;
   const out = octx.createImageData(w, h);
   const O = out.data;
-  const thr = Math.max(1, hlThreshold); // 門檻 0 時仍要求差 ≥1，完全相同的像素不染色
+  const thr = Math.max(1, hlThreshold * HL_THR_SCALE); // 門檻 0 時仍要求差 ≥1，完全相同的像素不染色
 
   for (let i = 0; i < A.length; i += 4) {
     const g = A[i] * 0.299 + A[i + 1] * 0.587 + A[i + 2] * 0.114;

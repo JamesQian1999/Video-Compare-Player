@@ -27,6 +27,7 @@
           <summary data-i18n="help.shortcuts">⌨️ 快捷鍵</summary>
           <div class="tips" data-i18n="app.tips">快捷鍵：<span class="kbd">Space</span> 播放 · <span class="kbd">←/→</span> 逐格 · <span class="kbd">1-4</span> 倍速 · <span class="kbd">+/-/0</span> 縮放 · <span class="kbd">R</span> 重置位置 · <span class="kbd">V</span> 切換檢視 (含比較) · <span class="kbd">M</span> 靜音 · <span class="kbd">F</span> 全螢幕 · <span class="kbd">S</span> 截圖 · <span class="kbd">X</span> 對調 · <span class="kbd">C</span> 色彩校正 · <span class="kbd">A</span>/<span class="kbd">B</span>/<span class="kbd">L</span> 循環片段</div>
         </details>
+        <button id="themeBtn" class="btn ghost" title="切換主題 / Switch theme" data-i18n-reserve="🖥️ 系統">🖥️ 系統</button>
         <button id="langBtn" class="btn ghost" title="切換語言 / Switch language" data-i18n-reserve="🌐 中文">🌐 EN</button>
       </div>
     </div>
@@ -44,7 +45,7 @@
         </div>
         <div id="leftSlot" class="slot" data-side="left">
           <video id="leftVideo" preload="metadata" playsinline></video>
-          <img id="leftImage" style="width: 100%; height: 100%; object-fit: contain; background:#000; display:none; transform-origin: center center; cursor: grab;" />
+          <img id="leftImage" style="width: 100%; height: 100%; object-fit: contain; background:var(--media-bg); display:none; transform-origin: center center; cursor: grab;" />
           <div class="placeholder" id="leftPh" data-i18n="ph.left">
             <div>拖曳影片或圖片到此，或點右上角「選擇左檔案」</div>
             <div class="muted">支援影片：MP4, MOV, AVI, MKV, WebM<br/>支援圖片：JPG, PNG, GIF, WebP, BMP</div>
@@ -66,7 +67,7 @@
         </div>
         <div id="rightSlot" class="slot" data-side="right">
           <video id="rightVideo" preload="metadata" playsinline></video>
-          <img id="rightImage" style="width: 100%; height: 100%; object-fit: contain; background:#000; display:none; transform-origin: center center; cursor: grab;" />
+          <img id="rightImage" style="width: 100%; height: 100%; object-fit: contain; background:var(--media-bg); display:none; transform-origin: center center; cursor: grab;" />
           <div class="placeholder" id="rightPh" data-i18n="ph.right">
             <div>拖曳影片或圖片到此，或點右上角「選擇右檔案」</div>
             <div class="muted">支援拖曳/點選上傳本機檔案<br/>影片和圖片均可同步比較</div>
@@ -154,7 +155,7 @@
         </div>
         <div class="ctrl-group" id="highlightGroup" style="display:none;">
           <span class="glabel" data-i18n="group.highlight">差異門檻</span>
-          <input id="hlThr" type="range" class="range" min="0" max="100" step="1" value="12" style="width:140px" title="差異門檻：像素差 ≥ 門檻才標色" data-i18n-title="label.hlThr.title" />
+          <input id="hlThr" type="range" class="range" min="0" max="100" step="1" value="12" style="width:140px" title="差異門檻：0–100 對應實際像素差 0–50，像素差 ≥ 門檻才標色" data-i18n-title="label.hlThr.title" />
           <span id="hlThrVal" class="muted" style="min-width:24px; text-align:right; font-variant-numeric:tabular-nums;">12</span>
           <button id="hlThrResetBtn" class="btn ghost" title="重設為預設門檻" data-i18n="btn.hlThrReset" data-i18n-title="btn.hlThrReset.title">↺ 預設</button>
         </div>

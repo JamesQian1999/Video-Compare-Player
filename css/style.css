@@ -1,4 +1,10 @@
+    /* ===== 主題（深色 / 淺色） =====
+       - 深色為預設（:root 的值）。
+       - 淺色以整組變數覆寫：either 系統偏好淺色（無 data-theme 時），
+         或使用者手動切換到 data-theme="light"。
+       - data-theme="dark" 明確鎖定深色，不受系統偏好影響。 */
     :root {
+      color-scheme: dark;
       --bg: #0b0d12;
       --panel: #121621;
       --panel-2: #151b28;
@@ -8,11 +14,99 @@
       --accent-2: #86efac;
       --danger: #f43f5e;
       --border: #2a3245;
+
+      --range-bg: #1b2233;
+      --thumb-border: #0b1020;
+      --btn-primary-bg: #16233a;
+      --btn-primary-border: #29436e;
+      --btn-green-bg: #0f2a19;
+      --btn-green-border: #1d4d2c;
+      --btn-danger-bg: #2a1220;
+      --btn-danger-border: #4d1c2e;
+      --btn-danger-text: #ffd8df;
+      --kbd-bg: #0f1525;
+      --kbd-border: #1c2741;
+      --kbd-text: #c5d2f6;
+      --chip-bg: rgba(255,255,255,0.06);
+      --group-bg: rgba(255,255,255,0.02);
+      --active-bg: #1d3a5f;
+      --active-border: #3a6db0;
+      --active-text: #cfe1ff;
+      --media-bg: #000;
+    }
+
+    /* 淺色調色盤（供系統偏好與手動切換共用） */
+    :root[data-theme="light"] {
+      color-scheme: light;
+      --bg: #f5f7fa;
+      --panel: #ffffff;
+      --panel-2: #eef1f6;
+      --text: #1a1f2b;
+      --muted: #5a6472;
+      --accent: #2f6fed;
+      --accent-2: #16a34a;
+      --danger: #e11d48;
+      --border: #d3d9e3;
+
+      --range-bg: #dde3ec;
+      --thumb-border: #ffffff;
+      --btn-primary-bg: #e2ecff;
+      --btn-primary-border: #9dbcf5;
+      --btn-green-bg: #dcfce7;
+      --btn-green-border: #86d7a5;
+      --btn-danger-bg: #fde4e8;
+      --btn-danger-border: #f5b5c1;
+      --btn-danger-text: #9f1239;
+      --kbd-bg: #eef2fb;
+      --kbd-border: #cdd7ee;
+      --kbd-text: #2b3a67;
+      --chip-bg: rgba(0,0,0,0.05);
+      --group-bg: rgba(0,0,0,0.02);
+      --active-bg: #d6e4ff;
+      --active-border: #6f9dee;
+      --active-text: #1d3a5f;
+      --media-bg: #e8ecf3;
+    }
+
+    /* 未手動指定主題時（無 data-theme）跟隨系統：系統為淺色即套用淺色調色盤 */
+    @media (prefers-color-scheme: light) {
+      :root:not([data-theme]) {
+        color-scheme: light;
+        --bg: #f5f7fa;
+        --panel: #ffffff;
+        --panel-2: #eef1f6;
+        --text: #1a1f2b;
+        --muted: #5a6472;
+        --accent: #2f6fed;
+        --accent-2: #16a34a;
+        --danger: #e11d48;
+        --border: #d3d9e3;
+
+        --range-bg: #dde3ec;
+        --thumb-border: #ffffff;
+        --btn-primary-bg: #e2ecff;
+        --btn-primary-border: #9dbcf5;
+        --btn-green-bg: #dcfce7;
+        --btn-green-border: #86d7a5;
+        --btn-danger-bg: #fde4e8;
+        --btn-danger-border: #f5b5c1;
+        --btn-danger-text: #9f1239;
+        --kbd-bg: #eef2fb;
+        --kbd-border: #cdd7ee;
+        --kbd-text: #2b3a67;
+        --chip-bg: rgba(0,0,0,0.05);
+        --group-bg: rgba(0,0,0,0.02);
+        --active-bg: #d6e4ff;
+        --active-border: #6f9dee;
+        --active-text: #1d3a5f;
+        --media-bg: #e8ecf3;
+      }
     }
     * { box-sizing: border-box; }
     html, body { height: 100%; }
     body {
       margin: 0; background: var(--bg); color: var(--text); font: 14px/1.4 system-ui, -apple-system, Segoe UI, Roboto, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji";
+      transition: background-color 0.2s ease, color 0.2s ease;
     }
     .wrap { max-width: 100%; margin: 10px 20px; padding: 8px; }
 
@@ -79,8 +173,8 @@
       opacity: 0.6;
     }
     .slot.dragover { outline: 2px dashed var(--accent); outline-offset: -6px; }
-    .slot video { 
-      width: 100%; height: 100%; object-fit: contain; background:#000; display:block; 
+    .slot video {
+      width: 100%; height: 100%; object-fit: contain; background:var(--media-bg); display:block;
       transition: transform 0.1s ease;
       transform-origin: center center;
       cursor: grab;
@@ -103,7 +197,7 @@
     .slot .placeholder { position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px; pointer-events:none; color:var(--muted); font-size:13px; }
 
     .video-container .topbar { position:absolute; left:10px; right:10px; top:10px; display:flex; align-items:center; justify-content:space-between; gap:8px; z-index:2; }
-    .chip { background: rgba(255,255,255,0.06); color:var(--text); padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid var(--border); }
+    .chip { background: var(--chip-bg); color:var(--text); padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid var(--border); }
 
     .filename-bar {
       background: var(--panel-2);
@@ -135,9 +229,9 @@
     }
     .btn:hover { filter: brightness(1.08); }
     .btn.ghost { background: transparent; }
-    .btn.danger { background: #2a1220; border-color:#4d1c2e; color:#ffd8df; }
-    .btn.primary { background: #16233a; border-color:#29436e; }
-    .btn.green { background:#0f2a19; border-color:#1d4d2c; }
+    .btn.danger { background: var(--btn-danger-bg); border-color:var(--btn-danger-border); color:var(--btn-danger-text); }
+    .btn.primary { background: var(--btn-primary-bg); border-color:var(--btn-primary-border); }
+    .btn.green { background:var(--btn-green-bg); border-color:var(--btn-green-border); }
 
     .controls {
       margin-top: 8px; background: var(--panel); border:1px solid var(--border); border-radius:14px; padding: 10px; display:grid; gap:10px;
@@ -145,15 +239,15 @@
     .row { display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .row .grow { flex:1 1 auto; min-width:180px; }
 
-    .range { appearance: none; width:100%; height: 8px; border-radius:999px; background: #1b2233; outline:none; }
-    .range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%; background: var(--accent); cursor:pointer; border:2px solid #0b1020; }
+    .range { appearance: none; width:100%; height: 8px; border-radius:999px; background: var(--range-bg); outline:none; }
+    .range::-webkit-slider-thumb { -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%; background: var(--accent); cursor:pointer; border:2px solid var(--thumb-border); }
     .range::-moz-range-thumb { width:16px; height:16px; border:none; border-radius:50%; background: var(--accent); cursor:pointer; }
 
     label { color: var(--muted); font-size:12px; }
     select, input[type=number] { background: var(--panel-2); color: var(--text); border:1px solid var(--border); border-radius:10px; padding:6px 8px; font-size:13px; }
     input[type=range] { accent-color: var(--accent); }
 
-    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:#0f1525; border:1px solid #1c2741; padding:2px 6px; border-radius:6px; font-size:12px; color:#c5d2f6; }
+    .kbd { font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; background:var(--kbd-bg); border:1px solid var(--kbd-border); padding:2px 6px; border-radius:6px; font-size:12px; color:var(--kbd-text); }
     .muted { color: var(--muted); }
 
     /* 控制列分群：同功能的按鈕圈在一起並給小標籤 */
@@ -161,7 +255,7 @@
       display: flex; align-items: center; gap: 6px;
       padding: 4px 8px 4px 10px;
       border: 1px solid var(--border); border-radius: 12px;
-      background: rgba(255,255,255,0.02);
+      background: var(--group-bg);
     }
     .ctrl-group .glabel {
       font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
@@ -207,7 +301,7 @@
     }
     .shortcuts-help summary::-webkit-details-marker { display: none; }
     .shortcuts-help summary:hover { filter: brightness(1.08); }
-    .shortcuts-help[open] summary { background: #1d3a5f; border-color: #3a6db0; }
+    .shortcuts-help[open] summary { background: var(--active-bg); border-color: var(--active-border); color: var(--active-text); }
     .shortcuts-help .tips {
       position: absolute; right: 0; top: calc(100% + 8px);
       width: 400px; max-width: 80vw; z-index: 60;
@@ -216,7 +310,7 @@
       box-shadow: 0 8px 24px rgba(0,0,0,0.45);
     }
 
-    .btn.active { background:#1d3a5f; border-color:#3a6db0; color:#cfe1ff; }
+    .btn.active { background:var(--active-bg); border-color:var(--active-border); color:var(--active-text); }
 
     .seek-wrap { position: relative; }
     .seek-wrap input[type=range] { position: relative; z-index: 2; }
@@ -368,7 +462,7 @@
     }
     .grid.highlight-view .highlight-container { display: flex; }
     .highlight-container canvas {
-      width: 100%; height: 100%; object-fit: contain; background: #000;
+      width: 100%; height: 100%; object-fit: contain; background: var(--media-bg);
       transition: transform 0.1s ease;
       transform-origin: center center;
       cursor: grab;

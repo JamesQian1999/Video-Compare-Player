@@ -22,6 +22,9 @@ let lastVolume = 1;
 
 const SETTINGS_KEY = 'sbsPlayerSettings_v1';
 
+// 主題模式：'system'（跟隨瀏覽器/系統）| 'light'（淺色）| 'dark'（深色）；預設跟隨系統
+let themeMode = 'system';
+
 // FPS 檢測變數
 let detectedFPS = 30; // 預設FPS（兩支取較小者）
 let leftFps = null;

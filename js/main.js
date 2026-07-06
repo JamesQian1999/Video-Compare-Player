@@ -11,6 +11,18 @@
   applyStaticTexts();
 })();
 
+// --- 主題初始化：優先用已儲存設定，否則跟隨系統（盡早套用以避免閃爍）---
+(function initTheme() {
+  try {
+    const raw = localStorage.getItem(SETTINGS_KEY);
+    if (raw) {
+      const th = JSON.parse(raw).theme;
+      if (th === 'light' || th === 'dark' || th === 'system') themeMode = th;
+    }
+  } catch {}
+  applyTheme();       // 定義於 settings.js
+})();
+
 // 切換語言後刷新所有由 JS 動態產生的文字
 function refreshDynamicTexts() {
   updatePlayPauseButton();
@@ -22,9 +34,11 @@ function refreshDynamicTexts() {
   if (!debugInfoEl.classList.contains('collapsed')) updateDebugInfo();
   updateTimeUI();
   langBtn.textContent = t('btn.lang');
+  updateThemeButton();
 }
 
 langBtn.addEventListener('click', toggleLanguage);
+themeBtn.addEventListener('click', cycleTheme);
 
 // File inputs
 leftFile.addEventListener('change', e=>{

@@ -69,3 +69,4 @@ const compareDivider = $('#compareDivider');
 const compareLabelLeft = $('#compareLabelLeft');
 const compareLabelRight = $('#compareLabelRight');
 const langBtn = $('#langBtn');
+const themeBtn = $('#themeBtn');
