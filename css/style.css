@@ -229,11 +229,18 @@
     .seek-marker {
       position: absolute; top: 50%; transform: translate(-50%, -50%);
       width: 3px; height: 18px; background: var(--accent-2);
-      pointer-events: none; z-index: 3; border-radius: 2px;
+      z-index: 3; border-radius: 2px;
       box-shadow: 0 0 0 1px rgba(0,0,0,0.4);
       /* 對齊 range thumb 軌跡：thumb 中心從 8px 走到 (100% - 8px)，--pos 為 0~1 的進度 */
       left: calc(8px + var(--pos, 0) * (100% - 16px));
+      cursor: ew-resize; touch-action: none;
     }
+    /* 加大拖曳熱區（視覺仍是 3px 細線） */
+    .seek-marker::after {
+      content: ''; position: absolute; left: 50%; top: 50%;
+      transform: translate(-50%, -50%); width: 16px; height: 26px;
+    }
+    .seek-marker:hover, .seek-marker.dragging { width: 5px; }
     .seek-marker-b { background: #fbbf24; }
 
     /* min-width 固定寬度：避免毫秒/影格數字進位（位數改變）時，前面的 seek bar 一直伸縮 */

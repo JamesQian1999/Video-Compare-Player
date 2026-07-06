@@ -244,6 +244,42 @@ seek.addEventListener('input', ()=>{
   if (isPlaying) reanchor();
 });
 
+// A/B 標記拖曳 — 直接在時間軸上調整循環點
+// 反推 CSS 的定位公式：left = 8px + pos * (寬 - 16px)，所以 pos = (x - 8) / (寬 - 16)
+function markerFrameFromPointer(e){
+  const rect = seek.getBoundingClientRect();
+  const pos = Math.max(0, Math.min(1, (e.clientX - rect.left - 8) / (rect.width - 16)));
+  return frameOf(pos * baseDuration);
+}
+function initMarkerDrag(markerEl, which){
+  markerEl.addEventListener('pointerdown', (e)=>{
+    if (!(baseDuration > 0)) return;
+    e.preventDefault();
+    markerEl.setPointerCapture(e.pointerId);
+    markerEl.classList.add('dragging');
+    const move = (ev)=>{
+      // 吸附影格中央，並保持 A、B 至少相差一格（拖過頭時夾住，不清除另一點）
+      let n = markerFrameFromPointer(ev);
+      if (which === 'a' && bPoint !== null) n = Math.min(n, frameOf(bPoint) - 1);
+      if (which === 'b' && aPoint !== null) n = Math.max(n, frameOf(aPoint) + 1);
+      n = Math.max(0, Math.min(maxFrameIndex(), n));
+      const t = frameCenterTime(n);
+      if (which === 'a') aPoint = t; else bPoint = t;
+      updateABMarkers();
+    };
+    const end = ()=>{
+      markerEl.removeEventListener('pointermove', move);
+      markerEl.classList.remove('dragging');
+    };
+    move(e);
+    markerEl.addEventListener('pointermove', move);
+    markerEl.addEventListener('pointerup', end, { once: true });
+    markerEl.addEventListener('pointercancel', end, { once: true });
+  });
+}
+initMarkerDrag(markerA, 'a');
+initMarkerDrag(markerB, 'b');
+
 // Speed + volume（倍速只影響主時鐘推進速度，不再改 video.playbackRate）
 speed.addEventListener('change', ()=>{
   if (isPlaying) reanchor(); // 從當下重新起算，套用新倍速
