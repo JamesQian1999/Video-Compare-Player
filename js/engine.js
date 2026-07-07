@@ -4,9 +4,17 @@
 // 同源同 fps ⇒ 同一時間戳＝同一影格，因此「暫停必定停在同一 frame」由建構保證，
 // 不需要任何事後對齊或漂移校正。播放採 seek 驅動並節流成「每格一次」。
 //
+// 播放推進節拍（v2：兩邊 seek 完成才前進一格，HD 也保證同步）：
+// - 舊版用 wall clock 推進 masterTime，每格對兩邊發 seek 但「不等」seek 完成。
+//   SD 影片 seek 快，看起來沒事；HD 影片 seek 比一格還久，且兩邊解碼完成時間不同，
+//   於是快的一邊一直往前跳、慢的一邊卡住 → 「一邊在動、一邊不動」且逐漸脫拍。
+// - 新版改為「以兩邊 seeked 事件為節拍」：發出第 N 格的 seek 後，必須等左右兩支
+//   都 seeked 完成，才准前進到第 N+1 格。解碼快 ⇒ 依實時節拍播；解碼慢 ⇒ 自然變慢
+//   （不用 real time），但任何時刻兩邊必為同一格，永不脫拍。
+//
 // 已知取捨：
 // - 播放時「無音訊」（seek 驅動不播聲音）；volume/mute UI 保留僅為與原版對等。
-// - 高 fps 影片的播放平滑度取決於 seek 效能；本工具主要用於逐格比對（樣本為 10fps）。
+// - HD/高 fps 影片解碼較慢時，播放會慢於實時（以換取兩邊嚴格同步）。
 
 // ===== 影格索引主時鐘引擎：核心函式 =====
 function fpsVal(){ return Math.max(1, Number(fps.value) || detectedFPS || 30); }
@@ -15,12 +23,45 @@ function totalFramesCount(){ const d = baseDuration || 0; return Math.max(0, Mat
 function maxFrameIndex(){ return Math.max(0, totalFramesCount() - 1); }
 function frameOf(t){ return Math.floor(t * fpsVal() + 1e-6); }
 function frameCenterTime(n){ return (n + 0.5) / fpsVal(); } // 影格中央，落點穩定不卡格邊界
-function reanchor(){ playAnchorWall = performance.now(); playAnchorTime = masterTime; displayedFrame = frameOf(masterTime); }
+function reanchor(){
+  playAnchorWall = performance.now(); playAnchorTime = masterTime; displayedFrame = frameOf(masterTime);
+  nextFrameWall = performance.now();          // 立刻可推進下一格
+  seekPending = waitingLeft = waitingRight = false; // 丟棄舊 seek 的等待狀態
+}
 
 // 只做「把兩支影片定位到給定時間」這件事（右邊加 syncOffset）；圖片側略過
 function seekBoth(t){
   if (Number.isFinite(leftVideo.duration))  leftVideo.currentTime  = Math.max(0, Math.min(t, leftVideo.duration));
   if (Number.isFinite(rightVideo.duration)) rightVideo.currentTime = Math.max(0, Math.min(t + syncOffset, rightVideo.duration));
+}
+
+// ===== 播放推進：以「兩邊 seek 完成」為節拍（HD 也保證同步）=====
+let seekPending = false;       // 目前是否有一組播放 seek 還沒被兩邊完成
+let waitingLeft = false;       // 是否還在等左邊 seeked
+let waitingRight = false;      // 是否還在等右邊 seeked
+let seekStartWall = 0;         // 這組 seek 發出的時間（看門狗逾時用）
+let nextFrameWall = 0;         // 下一格最早可推進的時間（實時節拍；解碼較慢時自然被超過）
+const SEEK_WATCHDOG_MS = 3000; // seeked 遲遲不來（同格夾住/解碼異常）就放行，避免卡死
+
+// 兩支影片各自 seeked 完成時清掉對應的等待旗標；兩邊都好了才算整組完成
+leftVideo.addEventListener('seeked',  () => { waitingLeft  = false; if (!waitingRight) seekPending = false; });
+rightVideo.addEventListener('seeked', () => { waitingRight = false; if (!waitingLeft)  seekPending = false; });
+
+// 對單支發出 seek；回傳「是否需要等它的 seeked」（有實際位移＝會發 seeked；圖片/未載入＝不等）
+function armSeek(video, target){
+  if (!Number.isFinite(video.duration)) return false;
+  target = Math.max(0, Math.min(target, video.duration));
+  const prev = video.currentTime;
+  video.currentTime = target;
+  return Math.abs(prev - target) > 1e-4; // 位移夠大才會觸發 seeked，否則不要等它
+}
+
+// 播放專用：發出一組 seek，並記錄「要等左右哪幾邊」，兩邊都 seeked 才准前進
+function beginSeekBoth(t){
+  waitingLeft  = armSeek(leftVideo, t);
+  waitingRight = armSeek(rightVideo, t + syncOffset);
+  seekPending  = waitingLeft || waitingRight;
+  seekStartWall = performance.now();
 }
 
 // 手動定位（暫停/逐格/seek bar/reset/offset/swap/loop）：
@@ -58,25 +99,29 @@ function pauseBoth(){
 // 主時鐘 + UI 迴圈（合併舊 tick 與播放推進，全程只有這一個 rAF）
 function frameLoop(){
   if (isPlaying) {
-    const d = baseDuration || 0;
-    const elapsed = (performance.now() - playAnchorWall) / 1000 * speedVal();
-    let t = playAnchorTime + elapsed;
-    let ended = false;
-    if (d > 0 && t >= d) { t = d; ended = true; }
-    masterTime = t; // 連續播放頭
-    // 節流：只有整數影格改變時才 seek 兩邊（10fps≈10 次/秒，避免每 rAF seek）
-    const nf = Math.min(maxFrameIndex(), frameOf(t));
-    if (nf !== displayedFrame) {
-      displayedFrame = nf;
-      seekBoth(frameCenterTime(nf));
+    const now = performance.now();
+    if (seekPending) {
+      // 等左右兩邊都把「這一格」解出來才前進；解碼慢就慢，但絕不脫拍。
+      // 看門狗：seeked 遲遲不來（同格夾住/解碼異常）超過門檻就放行，避免整個卡死。
+      if (now - seekStartWall > SEEK_WATCHDOG_MS) { seekPending = waitingLeft = waitingRight = false; }
+    } else if (now >= nextFrameWall) {
+      // 兩邊都就緒，且已到（實時）節拍點 → 前進一格
+      const next = displayedFrame + 1;
+      if (next > maxFrameIndex()) {
+        // 到尾端：定格於最後一格並暫停
+        masterTime = baseDuration || 0;
+        pauseBoth();
+      } else {
+        displayedFrame = next;
+        masterTime = frameCenterTime(next);
+        beginSeekBoth(masterTime); // 對兩邊發 seek，並開始等兩邊 seeked
+        // 實時節拍：下一格最早可推進時間。解碼慢於此 ⇒ 被自然超過 ⇒ 慢放；快於此 ⇒ 等到點才播。
+        nextFrameWall = now + 1000 / (fpsVal() * speedVal());
+        audioTick();               // 音訊：連續播放中做漂移校正（偏差過大才拉回，避免爆音）
+        maybeLoopAB(masterTime);
+      }
     }
-    audioTick(); // 音訊：連續播放中做漂移校正（偏差過大才拉回，避免爆音）
     updateTimeUI();
-    if (ended) {
-      pauseBoth();
-    } else {
-      maybeLoopAB(masterTime);
-    }
   } else {
     updateTimeUI();
   }
