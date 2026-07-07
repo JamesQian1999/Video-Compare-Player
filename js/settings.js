@@ -35,6 +35,10 @@ function saveSettings() {
       speed: speed.value,
       volume: Number(volume.value),
       lastVolume: lastVolume,
+      leftAudioVol,
+      rightAudioVol,
+      leftAudioMuted,
+      rightAudioMuted,
       fps: Number(fps.value),
       viewMode,
       highlightThr: hlThreshold,
@@ -56,6 +60,11 @@ function loadSettings() {
     if (s.speed) speed.value = s.speed;
     if (s.volume !== undefined) volume.value = s.volume;
     if (s.lastVolume !== undefined && s.lastVolume > 0) lastVolume = s.lastVolume;
+    // 左右分軌音量／靜音
+    if (s.leftAudioVol !== undefined) { leftAudioVol = s.leftAudioVol; leftVolume.value = s.leftAudioVol; }
+    if (s.rightAudioVol !== undefined) { rightAudioVol = s.rightAudioVol; rightVolume.value = s.rightAudioVol; }
+    if (s.leftAudioMuted) setSideMuted('left', true, true);
+    if (s.rightAudioMuted) setSideMuted('right', true, true);
     if (s.fps) fps.value = s.fps;
     if (s.highlightThr !== undefined) setHlThreshold(s.highlightThr);
     if (s.viewMode) setViewMode(s.viewMode);

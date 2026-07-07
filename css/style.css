@@ -263,6 +263,16 @@
     }
     #playPauseBtn { min-width: 92px; }
 
+    /* 音量群組：左右分軌標籤與分隔線 */
+    .ctrl-group .audio-tag {
+      font-size: 11px; font-weight: 600; color: var(--muted);
+      margin-left: 2px; white-space: nowrap; user-select: none;
+    }
+    .ctrl-group .audio-sep {
+      width: 1px; align-self: stretch; margin: 2px 4px;
+      background: var(--border);
+    }
+
     /* tight row：群組彼此相連、不留空白（共用邊框、只保留換行時的垂直間距）
        align-items: stretch 讓同一列的群組等高，接縫上下緣才會水平對齊、不會彎折 */
     .row.tight { column-gap: 0; row-gap: 6px; align-items: stretch; }

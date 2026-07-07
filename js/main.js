@@ -288,19 +288,25 @@ function initMarkerDrag(markerEl, which){
 initMarkerDrag(markerA, 'a');
 initMarkerDrag(markerB, 'b');
 
-// Speed + volume（倍速只影響主時鐘推進速度，不再改 video.playbackRate）
+// Speed + volume（倍速影響主時鐘推進速度，並同步音訊 playbackRate 以保持音畫同步）
 speed.addEventListener('change', ()=>{
+  audioApplyRate(); // 音訊倍速跟上（preservesPitch 保留音高）
   if (isPlaying) reanchor(); // 從當下重新起算，套用新倍速
   saveSettings();
 });
+// 總音量：套用到左右音訊（各自再乘上分軌音量）
 volume.addEventListener('input', ()=>{
   const v = Number(volume.value);
-  leftVideo.volume = v;
-  rightVideo.volume = v;
-  // 拉動音量取消靜音
+  // 拉動總音量取消總靜音
   if (v > 0 && isMuted) setMuted(false);
+  applyAudioGains();
   saveSettings();
 });
+// 左右分軌音量／靜音（可分開調整＝混音配比；兩邊同時輸出即混音）
+leftVolume.addEventListener('input', ()=> setSideVolume('left', leftVolume.value));
+rightVolume.addEventListener('input', ()=> setSideVolume('right', rightVolume.value));
+leftMuteBtn.addEventListener('click', ()=> toggleSideMuted('left'));
+rightMuteBtn.addEventListener('click', ()=> toggleSideMuted('right'));
 // FPS 改變會改變影格切分，重新吸附到影格中央並更新顯示
 fps.addEventListener('change', ()=>{
   applyFrame();

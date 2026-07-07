@@ -16,9 +16,15 @@ let loopEnabled = true; // 預設開啟：未設 A-B 點時循環整段（全範
 // 儲存使用者透過 resizer 自訂的欄寬，於進出比較模式時保留
 let savedGridColumns = null;
 
-// 靜音狀態
+// 靜音狀態（isMuted＝總靜音；lastVolume＝總音量解除靜音時的回復值）
 let isMuted = false;
 let lastVolume = 1;
+
+// 左右分軌音量／靜音（0–1；乘上總音量後套用到各自的隱藏 <audio>）
+let leftAudioVol = 1;
+let rightAudioVol = 1;
+let leftAudioMuted = false;
+let rightAudioMuted = false;
 
 const SETTINGS_KEY = 'sbsPlayerSettings_v1';
 

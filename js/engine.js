@@ -33,6 +33,7 @@ function applyFrame(){
   masterTime = frameCenterTime(n);
   displayedFrame = n;
   seekBoth(masterTime);
+  audioSeekManual(); // 音訊：手動定位時硬對齊到 master 時間（含 syncOffset）
   updateTimeUI();
 }
 
@@ -43,10 +44,12 @@ function playBoth(){
   if ((baseDuration || 0) > 0 && masterTime >= baseDuration - 1e-3) masterTime = 0;
   isPlaying = true;
   reanchor();
+  audioPlay(); // 音訊：對齊到 master 時間後原生播放（有聲音）
   updatePlayPauseButton();
 }
 function pauseBoth(){
   isPlaying = false;
+  audioPause(); // 音訊：先停，再由 applyFrame 對齊到定格位置
   // 吸附到目前影格中央並定位兩邊，確保停在同一 frame
   applyFrame();
   updatePlayPauseButton();
@@ -67,6 +70,7 @@ function frameLoop(){
       displayedFrame = nf;
       seekBoth(frameCenterTime(nf));
     }
+    audioTick(); // 音訊：連續播放中做漂移校正（偏差過大才拉回，避免爆音）
     updateTimeUI();
     if (ended) {
       pauseBoth();

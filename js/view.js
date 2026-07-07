@@ -526,7 +526,7 @@ function initDragFeature() {
   });
 }
 
-// 靜音
+// 總靜音（套用到左右音訊；分軌靜音另由 setSideMuted 管理）
 function setMuted(muted) {
   isMuted = muted;
   if (muted) {
@@ -534,22 +534,17 @@ function setMuted(muted) {
     const cur = Number(volume.value);
     if (cur > 0) lastVolume = cur;
     else if (!(lastVolume > 0)) lastVolume = 1;
-    leftVideo.muted = true;
-    rightVideo.muted = true;
     muteBtn.innerHTML = '🔇';
     muteBtn.classList.add('active');
   } else {
     // 解除靜音時若音量還是 0，回復到上次有聲的音量
     if (Number(volume.value) === 0 && lastVolume > 0) {
       volume.value = lastVolume;
-      leftVideo.volume = lastVolume;
-      rightVideo.volume = lastVolume;
     }
-    leftVideo.muted = false;
-    rightVideo.muted = false;
     muteBtn.innerHTML = '🔊';
     muteBtn.classList.remove('active');
   }
+  applyAudioGains();
   saveSettings();
 }
 function toggleMute() { setMuted(!isMuted); }

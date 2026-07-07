@@ -131,7 +131,8 @@ async function loadSide(side, file){
       v.style.display = 'block';
       v.src = url;
       v.removeAttribute('controls');
-      v.muted = isMuted; // 套用目前靜音狀態
+      v.muted = true; // 影片元素本身恆靜音（聲音改由隱藏 <audio> 負責）
+      setAudioSource(side, url); // 掛上專用音訊來源（與影片共用同一 blob URL）
 
       // 設定載入超時
       const loadTimeout = setTimeout(() => {
@@ -150,9 +151,9 @@ async function loadSide(side, file){
         });
         ph.style.display = 'none';
         updateBaseDuration();
-        // 自動把音量套用
-        v.volume = Number(volume.value);
-        v.playbackRate = Number(speed.value);
+        // 音訊 metadata 就緒：套用目前音量與倍速（影片元素本身恆靜音、不原生播放）
+        applyAudioGains();
+        audioApplyRate();
 
         // 色偏偵測：H.264 SPS video_full_range_flag + 容器 colr atom。
         //   full-range → 'fullrange' 仿射校正；
@@ -204,6 +205,7 @@ async function loadSide(side, file){
       v.style.display = 'none';
       img.style.display = 'block';
       img.src = url;
+      clearAudioSource(side); // 圖片無音訊
 
       img.addEventListener('load', ()=>{
         console.log(`${side} image loaded successfully:`, {
@@ -288,6 +290,7 @@ function clearSide(side){
   const fileInput = side==='left'? leftFile : rightFile;
 
   v.pause();
+  clearAudioSource(side); // 先卸掉音訊來源（再 revoke blob，避免音訊仍引用已釋放的 URL）
   if (v.src && v.src.startsWith('blob:')) URL.revokeObjectURL(v.src);
   v.removeAttribute('src');
   v.load();
@@ -357,6 +360,9 @@ function swapSides() {
   leftImage.style.display = rImg.display;
   rightImage.src = lImg.src || '';
   rightImage.style.display = lImg.display;
+
+  // 音訊來源一起對調（位置與播放狀態由下方 restore() 重建）
+  swapAudio();
 
   // 檔名互換
   leftFilename.textContent = rName;
